@@ -24,4 +24,5 @@ Projekt je navržen pro kvantifikaci a porovnání dávkové distribuce mezi nas
     Gamma: Výpočet gamové analýzy mezi filmem a dávkou TPS.
     Visualization: Komplexní vizualizační rozhraní, které kombinuje výsledky gamového výpočtu, histogramu, profilů a DVH.
 
-# Kód se nepouští přes optparser. TO byla jen původní idea a nakonec to v kódu zůstalu misto dedikované konfigurace. 
+
+Kód se nepouští přes optparser. To byla původní idea a nakonec to v kódu zůstalu misto dedikované konfigurace. 
