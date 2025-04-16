@@ -14,6 +14,9 @@ import pydicom as dcm
 import tifffile as tiff
 import time
 
+a = 1
+
+
 import Rotate_RT_tensor as RotRT
 from scipy.optimize import minimize
 import Optimization_calibration_curve as OptCal
