@@ -31,15 +31,15 @@ Kód se nepouští přes optparser. To byla původní idea a nakonec to v kódu 
 
 1) Modularizace kódu
    - přehlednost kódu a usnadnění menších korekcí (nebude třeba kontrolovat vliv na celý kód)
-3) Přepis co největšího množství funkcí přes knihovny
+2) Přepis co největšího množství funkcí přes knihovny
    - optimalizace a robustnost
-5) Sepsat unit testy
+3) Sepsat unit testy
    - verifikace funkcí, robustnost
-7) Dokumentace
+4) Dokumentace
    - přehlednost, lepší sdíletelnost
-9) Konfigurační soubor nahrazující optparser
+5) Konfigurační soubor nahrazující optparser
     - robustnost, přehlednost
-11) Identifikace "choke" pointů a kontrola odpovídajících parametrů vstupních dat
-    - robustnost 
-(7) Geometrická gama?)
+6) Identifikace "choke" pointů a kontrola odpovídajících parametrů vstupních dat
+    - robustnost
+7) Geometrická gama?
 
