@@ -1,6 +1,41 @@
 """
-Výpočet 2D/3D gamy pro dávkovou distribuci z plánovačky (jeden konkrétní slice hledaný manuálně z důvodu praktičnosti)
-odečtenou dávkovou distribuci změřenou na skenu z ozářenýho filmu...
+Film Dosimetry Analysis Tool
+============================
+
+Tento skript provádí komplexní analýzu srovnání dávkových distribucí v antropomorfním fantomu.
+Porovnává dávky vypočítané v plánovacím systému s dávkami naměřenými pomocí gafchromických
+filmů EBT4.
+
+Hlavní funkcionality:
+- Výpočet gamma pass rate pro kvantitativní srovnání dávkových distribucí
+- Porovnání dávkových profilů mezi plánovanou a měřenou dávkou
+- Srovnání DVH (Dose Volume Histogram) křivek
+- Prostorová registrace pomocí lineárního posunu podle polohy fiduciálů v CT a na filmu
+
+Vstupy:
+- Naskenované gafchromické filmy ve formátu TIFF
+- CT snímky s definovanou polohou fantomu
+- Dávkové distribuce z plánovacího systému ve formátu DICOM
+- Struktury z plánovacího systému ve formátu DICOM RS
+
+Výstupy:
+- Vizualizace gamma analýzy s vyznačením oblastí nesouladu
+- Grafické porovnání dávkových profilů
+- DVH křivky pro definované struktury
+- Kvantitativní hodnocení shody pomocí gamma analýzy
+
+Použití:
+Program lze spustit z příkazové řádky s různými parametry:
+  -f, --film       Název souboru naskenovaného filmu
+  -t, --RD         Název DICOM souboru dávky z TPS
+  -a, --DTA        Hodnota 'distance to agreement' v mm (výchozí: 2)
+  -d, --DD         Hodnota 'dose difference' v % (výchozí: 3)
+  -c, --cut_off    Procentuální hodnota minimální uvažované dávky (výchozí: 10)
+  -r, --resolution Rozlišení gamma analýzy v mm (výchozí: 0.2)
+  -s, --RS         Název ROI z plánovacího systému (výchozí: 'IC_EX')
+  -l, --slice      Číslo řezu z CT, na kterém se nachází film (výchozí: 383)
+
+ - lze ale nikdy jsem to reálně nepoužil
 """
 import csv
 import optparse
@@ -13,10 +48,6 @@ import numpy as np
 import pydicom as dcm
 import tifffile as tiff
 import time
-
-a = 1
-
-
 import Rotate_RT_tensor as RotRT
 from scipy.optimize import minimize
 import Optimization_calibration_curve as OptCal
@@ -26,7 +57,7 @@ import Optimization_calibration_curve as OptCal
 filepath = r"C:\Users\kubad\Dropbox\Zlodějíčkovo slůj\Python\UVN_scripts\Film_dosimetry"
 
 """CT for loading CT information...slice thickness etc."""
-CT_add_path = r"\CT&Dose\srpen_24\CT\SBRT_0"
+CT_add_path = r"\CT&Dose\srpen_24\CT\SBRT_90"
 CT_dir = filepath + CT_add_path
 
 try:
@@ -61,9 +92,12 @@ parser.add_option("-r", "--resolution", action="store", dest="resolution",
                   help="- rozlišení gamma analýzy (v milimetrech)", default=0.2)
 parser.add_option('-s', '--RS', action='store', dest='RS_name', default=['IC EX'],
                   help='- název ROI z plánovačky')
-# Slice pro LR -> 374 (z listopadovýho měření), 381 (sprnové), 384 (24_srpen)
-# Slice pro AP -> 261 (z listopadovýho měření), 264 (srpnové), 267 (24_srpen)
-parser.add_option('-l', '--slice_number', action="store", dest='slice_number', default=384,
+# Hodnoty řezů CT pokud je orientace filmu psána jako LR (tzn. 0 aneb rotace insertu do horizontální polohy)
+#                               -> 374 (z listopadovýho měření), 381 (sprnové), 384 (24_srpen)
+
+# Hodnoty řezů CT pokud je orientace filmu psána jako AP (tzn. 90 aneb rotace insertu do vodorovné polohy)
+#                               -> 261 (z listopadovýho měření), 264 (srpnové), 267 (24_srpen)
+parser.add_option('-l', '--slice_number', action="store", dest='slice_number', default=267,
                   help='-číslo řezu z CT, na kterém se nachází film')
 
 gamma_options, args = parser.parse_args()
@@ -1022,7 +1056,7 @@ class Visualization(Gamma, RTStructures):
         plt.xlabel(txt, ha='center')
         plt.tight_layout()
         plt.title(self.film_name)
-        result_dir = r'C:\Users\kubad\Dropbox\Zlodějíčkovo slůj\Python\UVN_scripts\Film_dosimetry\Vysledky\\' + self.film_dir
+        result_dir = fr'{filepath}\Vysledky\\' + self.film_dir
 
         if not os.path.exists(result_dir):
             os.makedirs(result_dir)
@@ -1136,7 +1170,7 @@ def main(CT_path, film_path, TPS_path, RS_filename):
     film_vert_dist = np.abs(film_max_min_vertical[0] - film_max_min_vertical[1])
     film_hor_dist = np.abs(film_max_min_horizontal[0] - film_max_min_horizontal[1])
 
-    """Škálování filmu vzhledem k CT a tím pádem i dávce, použití původního rozlišení filmu přizpůsobeneéhé na nastavené rozlišení.
+    """Škálování filmu vzhledem k CT a tím pádem i dávce, použití původního rozlišení filmu přizpůsobeného na nastavené rozlišení.
         0,2 % chyba zaokroulením na reálný počet pixelů"""
     film_CT_ratio_vert = film_vert_dist / CT_vert_dist
     film_CT_ratio_hor = film_hor_dist / CT_hor_dist
@@ -1176,28 +1210,28 @@ def process_films(film, ct_dirs, tps_dirs, actual_film_directory):
 
     print('\n')
 
-    if "LR" in film:
-        if ct_path is not None and tps_path is not None:
-            main(ct_path, film_path, tps_path, rs_filename)
+    main(ct_path, film_path, tps_path, rs_filename)
 
 
 if __name__ == "__main__":
     # Define file paths and user details
     PC = "kubad"
 
-    actual_film_directory = fr"C:\Users\kubad\Dropbox\Zlodějíčkovo slůj\Python\UVN_scripts\Film_dosimetry\Filmy\1312_MLC_EBT4\Averaged_images"
+    actual_film_directory = fr"{filepath}\Filmy\1312_MLC_EBT4\Averaged_images"
 
-    CT_dirs = [fr"C:\Users\{PC}\Dropbox\Zlodějíčkovo slůj\Python\UVN_scripts\Film_dosimetry\CT&Dose\srpen_24\CT\SBRT_0",
-               fr"C:\Users\{PC}\Dropbox\Zlodějíčkovo slůj\Python\UVN_scripts\Film_dosimetry\CT&Dose\srpen_24\CT\SBRT_90"]
+    CT_dirs = [fr"{filepath}\CT&Dose\srpen_24\CT\SBRT_0",
+               fr"{filepath}\CT&Dose\srpen_24\CT\SBRT_90"]
 
-    TPS_dir = (fr"C:\Users\{PC}\Dropbox\Zlodějíčkovo slůj\Python\\UVN_scripts\Film_dosimetry\CT&Dose\srpen_24\RTD_RTS\\"
-               + r"\0819_2024")
+    TPS_dir = (fr"{filepath}\CT&Dose\srpen_24\RTD_RTS\0819_2024")
 
 
     # Get films from the actual directory
 
-    films = get_films_based_on(actual_film_directory)
+    # films = get_films_based_on(actual_film_directory)
 
     # Process films
-    for film in films:
-        process_films(film, CT_dirs, TPS_dir, actual_film_directory)
+    # Nahrávám konkrétní film, protože vím, že dřív vycházel dobře. Beru ho jako referenci funkčnosti kódu.
+
+    film = rf"C:\Users\kubad\Dropbox\Zlodějíčkovo slůj\Python\UVN_scripts\Film_dosimetry\Filmy\1312_MLC_EBT4\Averaged_images\SB_MLC_AP_XS_average.tif"
+
+    process_films(film, CT_dirs, TPS_dir, actual_film_directory)

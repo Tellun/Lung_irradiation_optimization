@@ -1,3 +1,33 @@
+"""
+Film Calibration Curve Optimization
+===================================
+
+Tento skript slouží k optimalizaci kalibračních křivek pro gafchromické filmy. Implementuje
+metodu pro určení optimálních vah jednotlivých barevných kanálů (R, G, B) k dosažení nejlepší
+kalibrační křivky pro převod mezi intenzitou pixelů a absorbovanou dávkou.
+
+Hlavní funkcionality:
+- Načítání kalibračních dat z textového souboru
+- Fitování racionální funkce (a/(x+b)+c) pro každý barevný kanál zvlášť
+- Optimalizace vah jednotlivých kanálů pro minimalizaci odchylky od známých dávek
+- Vizualizace kalibračních křivek
+
+Matematický model:
+Pro každý barevný kanál je použita racionální funkce tvaru D(P) = a/(P+b)+c, kde:
+- D je absorbovaná dávka
+- P je hodnota pixelu v daném kanálu
+- a, b, c jsou parametry získané fitováním
+
+Výsledná dávka je vypočtena jako vážený součet dávek z jednotlivých kanálů:
+D = w_R * D_R + w_G * D_G + w_B * D_B
+
+Použití:
+1. Připravte kalibrační data ve formátu txtového souboru (hodnoty dávky a příslušné hodnoty pixelů)
+2. Upravte cestu k souboru v proměnné 'filepath'
+3. Spusťte skript pro výpočet optimálních parametrů a vah
+4. Výsledné hodnoty použijte v hlavním skriptu pro dosimetrii filmů
+"""
+
 import numpy as np
 from scipy.optimize import minimize, curve_fit
 import matplotlib.pyplot as plt
