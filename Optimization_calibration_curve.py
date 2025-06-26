@@ -64,7 +64,7 @@ def load_channels_from_txt():
     P_G = np.flip(np.array(G_vals))
     P_B = np.flip(np.array(B_vals))
 
-    D_known = np.arange(len(P_B))
+    D_known = np.arange(len(P_B)) # Dávky pro účely kalibrace nabývají hodnot od 0 do 6 Gy, takže celkem 7 hodnot pro každý kanál...kalibrace byla tvořena po grayi, takže je v pohodě, když k hodně kanálů přiřadím posloupnost.
     return D_known, P_R, P_G, P_B
 
 D_known, P_R, P_G, P_B = load_channels_from_txt()
